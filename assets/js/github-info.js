@@ -12,10 +12,17 @@ function fetchGitHubInformation(event) {
             <img src="./assets/css/loader.gif" alt="Loading..." /img>
         </div>`);
     
-    $.when($.getJSON(`https://api.github.com/users/${username}`))
+    $.when(
+        $.getJSON(`https://api.github.com/users/${username}`),
+        $.getJSON(`https://api.github.com/users/${username}/repos`)
+        )
     .then(
-        function (response) {
-            $("#gh-user-data").html(userInformationData(response))
+        function (firstResponse, secondResponse) {
+            userData = firstResponse[0];
+            repoData = secondResponse[0];
+
+            $("#gh-user-data").html(userInformationHTML(userData));
+            $("#gh-repo-data").html(repoInformationHTML(repoData));
         },
         function (response) {
             if (response.status === 404) {
@@ -28,7 +35,7 @@ function fetchGitHubInformation(event) {
     );
 };
 
-function userInformationData(user) {
+function userInformationHTML(user) {
     return `
         <h2>${user.name}
             <span class="small-name">
@@ -45,4 +52,27 @@ function userInformationData(user) {
             Repos: ${user.public_repos}
             </p>
         </div>`
+};
+
+function repoInformationHTML(repos) {
+    console.log(repos);
+    console.log(repos.length);
+    if (repos.length == 0) {
+        return `<div class="clearfix repo-list">No Repos!</div>`
+    }
+
+    var listItemsHTML = repos.map(function(repo){
+        return `
+            <li>
+                <a href="${repo.html_url}" target="_blank">${repo.name}</a>
+            </li>`
+    });
+
+    return `<div class="clearfix repo-list">
+                <p><strong>Repo list:</strong></p>
+                <ul>
+                    ${listItemsHTML.join("\n")}
+                </ul>
+            </div>`
+        
 }
